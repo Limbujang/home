@@ -1,0 +1,236 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>바코드 생성기</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .barcode-container {
+            margin-top: 30px;
+            text-align: center;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            display: none;
+        }
+        
+        .barcode-container.show {
+            display: block;
+        }
+        
+        #barcode {
+            margin: 20px auto;
+        }
+        
+        .download-btn {
+            background: #28a745;
+            margin-top: 15px;
+        }
+        
+        .download-btn:hover {
+            background: #218838;
+        }
+        
+        .error {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .format-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 바코드 생성기</h1>
+        
+        <div class="input-group">
+            <label for="barcodeText">바코드 값</label>
+            <input type="text" id="barcodeText" placeholder="숫자 또는 텍스트 입력" value="1234567890128">
+            <div class="error" id="error">올바른 형식을 입력해주세요</div>
+        </div>
+        
+        <div class="input-group">
+            <label for="barcodeFormat">바코드 형식</label>
+            <select id="barcodeFormat">
+                <option value="CODE128">CODE128 (일반용)</option>
+                <option value="EAN13">EAN13 (13자리 숫자)</option>
+                <option value="EAN8">EAN8 (8자리 숫자)</option>
+                <option value="UPC">UPC (12자리 숫자)</option>
+                <option value="CODE39">CODE39 (영숫자)</option>
+                <option value="ITF14">ITF14 (14자리 숫자)</option>
+            </select>
+            <div class="format-info" id="formatInfo">거의 모든 텍스트와 숫자 지원</div>
+        </div>
+        
+        <button onclick="generateBarcode()">바코드 생성</button>
+        
+        <div class="barcode-container" id="barcodeContainer">
+            <svg id="barcode"></svg>
+            <button class="download-btn" onclick="downloadBarcode()">바코드 다운로드 (PNG)</button>
+        </div>
+    </div>
+    
+    <script>
+        const formatDescriptions = {
+            'CODE128': '거의 모든 텍스트와 숫자 지원',
+            'EAN13': '13자리 숫자 필요 (예: 1234567890128)',
+            'EAN8': '8자리 숫자 필요 (예: 12345670)',
+            'UPC': '12자리 숫자 필요 (예: 123456789012)',
+            'CODE39': '영문 대문자와 숫자 지원',
+            'ITF14': '14자리 숫자 필요'
+        };
+        
+        document.getElementById('barcodeFormat').addEventListener('change', function() {
+            document.getElementById('formatInfo').textContent = formatDescriptions[this.value];
+        });
+        
+        function generateBarcode() {
+            const text = document.getElementById('barcodeText').value;
+            const format = document.getElementById('barcodeFormat').value;
+            const errorDiv = document.getElementById('error');
+            const container = document.getElementById('barcodeContainer');
+            
+            if (!text) {
+                errorDiv.textContent = '바코드 값을 입력해주세요';
+                errorDiv.style.display = 'block';
+                container.classList.remove('show');
+                return;
+            }
+            
+            try {
+                JsBarcode("#barcode", text, {
+                    format: format,
+                    width: 2,
+                    height: 100,
+                    displayValue: true,
+                    fontSize: 16,
+                    margin: 10
+                });
+                
+                errorDiv.style.display = 'none';
+                container.classList.add('show');
+            } catch (e) {
+                errorDiv.textContent = '올바른 형식이 아닙니다. ' + e.message;
+                errorDiv.style.display = 'block';
+                container.classList.remove('show');
+            }
+        }
+        
+        function downloadBarcode() {
+            const svg = document.getElementById('barcode');
+            const svgData = new XMLSerializer().serializeToString(svg);
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            
+            img.onload = function() {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+                
+                const pngFile = canvas.toDataURL('image/png');
+                const downloadLink = document.createElement('a');
+                downloadLink.download = 'barcode.png';
+                downloadLink.href = pngFile;
+                downloadLink.click();
+            };
+            
+            img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+        }
+        
+        // 페이지 로드시 기본 바코드 생성
+        window.onload = function() {
+            generateBarcode();
+        };
+    </script>
+</body>
+</html>
